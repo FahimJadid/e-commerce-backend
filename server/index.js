@@ -6,10 +6,7 @@ const connectToDatabase = require("./config/database");
 const PORT = process.env.PORT || 4040;
 const authRouter = require("./routes/authRoutes");
 
-app.get("/", (req, res) => {
-  res.send(`<h1>Hi! I am Backend!</h1>`);
-});
-
+app.use(express.json());
 app.use("/api/v1/user", authRouter);
 
 const startServer = async () => {
