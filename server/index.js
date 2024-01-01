@@ -7,6 +7,7 @@ const PORT = process.env.PORT || 4040;
 const authRouter = require("./routes/authRoutes");
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use("/api/v1/user", authRouter);
 
 const startServer = async () => {
