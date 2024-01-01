@@ -5,10 +5,14 @@ require("dotenv").config();
 const connectToDatabase = require("./config/database");
 const PORT = process.env.PORT || 4040;
 const authRouter = require("./routes/authRoutes");
+const { notFound, errorHandler } = require("./middlewares/errorHandler");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/v1/user", authRouter);
+
+app.use(notFound);
+app.use(errorHandler);
 
 const startServer = async () => {
   try {
