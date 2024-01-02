@@ -26,7 +26,7 @@ const productSchema = new Schema(
     },
     quantity: {
       type: Number,
-      default: 0,
+      required: true,
     },
     category: {
       type: mongoose.Schema.Types.ObjectId,
