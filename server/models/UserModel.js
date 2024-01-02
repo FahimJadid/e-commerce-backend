@@ -31,6 +31,11 @@ const userSchema = new Schema({
     type: String,
     required: [true, "Password required"],
   },
+  role: {
+    type: String,
+    enum: ["user", "admin"],
+    default: "user",
+  },
 });
 
 // Middleware to hash the password before saving
