@@ -1,6 +1,7 @@
 const generateToken = require("../config/jwtToken");
 const User = require("../models/UserModel");
 const asyncHandler = require("express-async-handler");
+const validateMongoId = require("../utils/validateMongoId");
 
 // create User / Register User
 const createUser = asyncHandler(async (req, res) => {
@@ -174,7 +175,7 @@ const unblockUser = asyncHandler(async (req, res) => {
     }
 
     res.json({
-      message: "User unblocked successfully",
+      message: "User Unblocked successfully",
     });
   } catch (error) {
     throw new Error("Error blocking user:", error);
