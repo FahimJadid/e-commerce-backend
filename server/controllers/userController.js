@@ -64,6 +64,7 @@ const loginUser = asyncHandler(async (req, res) => {
 const updateUser = asyncHandler(async (req, res) => {
   try {
     const { id } = req.user; // best practice to get id from token
+    validateMongoId(id);
     const { firstName, lastName, email, mobile } = req?.body;
 
     // update user:
@@ -93,6 +94,8 @@ const getAllUsers = asyncHandler(async (req, res) => {
 const getUser = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
+    validateMongoId(id);
+
     const singleUser = await User.findById(id, "-password");
 
     if (!singleUser) {
@@ -109,6 +112,7 @@ const getUser = asyncHandler(async (req, res) => {
 const deleteUser = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
+    validateMongoId(id);
 
     // Checking if user exists:
     const findUser = await User.findById(id);
@@ -130,6 +134,7 @@ const deleteUser = asyncHandler(async (req, res) => {
 const blockUser = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
+    validateMongoId(id);
 
     // update the user to set blocked to true
     const block = await User.findByIdAndUpdate(
@@ -155,6 +160,7 @@ const blockUser = asyncHandler(async (req, res) => {
 const unblockUser = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
+    validateMongoId(id);
 
     // update the user to set blocked to true
     const unblock = await User.findByIdAndUpdate(
