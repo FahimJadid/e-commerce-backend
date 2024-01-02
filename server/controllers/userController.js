@@ -2,6 +2,7 @@ const generateToken = require("../config/jwtToken");
 const User = require("../models/UserModel");
 const asyncHandler = require("express-async-handler");
 const validateMongoId = require("../utils/validateMongoId");
+const generateRefreshToken = require("../config/refreshToken");
 
 // create User / Register User
 const createUser = asyncHandler(async (req, res) => {
@@ -42,9 +43,20 @@ const loginUser = asyncHandler(async (req, res) => {
 
     //   message: "User logged in successfully",
     // });
-
+    const refreshToken = generateRefreshToken(findUser?._id);
     const { _id, firstName, lastName, email, mobile } = findUser;
     const token = generateToken(findUser._id);
+
+    const updateUser = await User.findByIdAndUpdate(
+      findUser._id,
+      { refreshToken: refreshToken },
+      { new: true }
+    );
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      maxAge: 72 * 60 * 60 * 1000,
+    });
 
     res.json({
       _id,
