@@ -9,7 +9,7 @@ const createUser = asyncHandler(async (req, res) => {
 
   if (!findUser) {
     const newUser = await User.create(req.body);
-    res.json({ message: "Registered successfully", newUser });
+    res.json({ message: "Registered successfully", user: newUser });
   } else {
     throw new Error("User already exists");
   }
@@ -63,7 +63,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
 const updateUser = asyncHandler(async (req, res) => {
   try {
-    const { id } = req.params;
+    // const { id } = req.params;
+    const { id } = req.user; // best practice to get id from token
     const { firstName, lastName, email, mobile } = req?.body;
 
     // Checking if user exists before updating:
@@ -82,7 +83,7 @@ const updateUser = asyncHandler(async (req, res) => {
     // Fetching the updated user:
     const updatedUser = await User.findById(id, "-password");
 
-    res.json({ message: "User updated successfully", updatedUser });
+    res.json({ message: "User updated successfully", user: updatedUser });
   } catch (error) {
     throw new Error("Error updating user:", error);
   }
@@ -92,7 +93,7 @@ const updateUser = asyncHandler(async (req, res) => {
 const getAllUsers = asyncHandler(async (req, res) => {
   try {
     const allUsers = await User.find({}, "-password");
-    res.json({ allUsers });
+    res.json({ users: allUsers });
   } catch (error) {
     throw new Error("Error fetching all users:", error);
   }
@@ -107,7 +108,7 @@ const getUser = asyncHandler(async (req, res) => {
     if (!singleUser) {
       throw new Error("User not found");
     }
-    res.json({ singleUser });
+    res.json({ user: singleUser });
   } catch (error) {
     throw new Error("Error fetching user:", error);
   }
