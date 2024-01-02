@@ -87,16 +87,47 @@ const handleRefreshToken = asyncHandler(async (req, res) => {
   if (!user) {
     throw new Error("User not found");
   }
+
   jwt.verify(refreshToken, process.env.JWT_SECRET, (err, decoded) => {
     // console.log(decoded);
     // console.log(decoded.user.id);
     if (err || user.id !== decoded.user.id) {
       throw new Error("Invalid refresh token");
     }
+
     // Generate a new access token
     const accessToken = generateToken(user?._id);
     res.json({ accessToken });
   });
+});
+
+// Logout User
+const logout = asyncHandler(async (req, res) => {
+  const cookie = req.cookies;
+  const refreshToken = cookie?.refreshToken;
+
+  if (!refreshToken) {
+    throw new Error("No refresh token found in Cookies");
+  }
+
+  const user = await User.findOne({ refreshToken }).select("-password");
+
+  if (!user) {
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+    });
+    return res.status(204).json({ message: "User not found" });
+  }
+
+  await User.findByIdAndUpdate(user._id, { $unset: { refreshToken: "" } });
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: true,
+  });
+
+  res.json({ message: "Logout successful" });
 });
 
 // Update a User
@@ -231,4 +262,5 @@ module.exports = {
   blockUser,
   unblockUser,
   handleRefreshToken,
+  logout,
 };
