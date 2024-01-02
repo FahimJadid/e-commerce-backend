@@ -56,6 +56,9 @@ const userSchema = new Schema({
       ref: "Product",
     },
   ],
+  refreshToken: {
+    type: String,
+  },
   timestamp: {
     type: Date,
     default: Date.now(),
