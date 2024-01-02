@@ -63,25 +63,15 @@ const loginUser = asyncHandler(async (req, res) => {
 
 const updateUser = asyncHandler(async (req, res) => {
   try {
-    // const { id } = req.params;
     const { id } = req.user; // best practice to get id from token
     const { firstName, lastName, email, mobile } = req?.body;
 
-    // Checking if user exists before updating:
-    const findUser = await User.findById(id, "-password");
-    if (!findUser) {
-      throw new Error("User not found");
-    }
-
-    // if user exists, update user:
-    await User.findByIdAndUpdate(
+    // update user:
+    const updatedUser = await User.findByIdAndUpdate(
       id,
       { firstName, lastName, email, mobile },
       { new: true }
-    );
-
-    // Fetching the updated user:
-    const updatedUser = await User.findById(id, "-password");
+    ).select("-password"); // Exclude the 'password' field from the response
 
     res.json({ message: "User updated successfully", user: updatedUser });
   } catch (error) {
