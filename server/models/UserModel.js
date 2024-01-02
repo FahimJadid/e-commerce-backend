@@ -36,6 +36,26 @@ const userSchema = new Schema({
     enum: ["user", "admin"],
     default: "user",
   },
+  cart: {
+    type: Array,
+    default: [],
+  },
+  address: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Address",
+    },
+  ],
+  wishlist: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Product",
+    },
+  ],
+  timestamp: {
+    type: Date,
+    default: Date.now(),
+  },
 });
 
 // Middleware to hash the password before saving
