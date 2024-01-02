@@ -8,7 +8,9 @@ const authRouter = require("./routes/authRoutes");
 const productRouter = require("./routes/productRoutes");
 const { notFound, errorHandler } = require("./middlewares/errorHandler");
 const cookieParser = require("cookie-parser");
+const morgan = require("morgan");
 
+app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
