@@ -97,7 +97,8 @@ const deleteUser = asyncHandler(async (req, res) => {
     }
 
     // if user exists, delete user:
-    await User.deleteOne({ _id: id });
+    // await User.deleteOne({ _id: id });
+    await User.findByIdAndDelete(id);
 
     res.json({ message: "User deleted successfully" });
   } catch (error) {
