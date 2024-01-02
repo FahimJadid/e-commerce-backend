@@ -9,7 +9,7 @@ const createUser = asyncHandler(async (req, res) => {
 
   if (!findUser) {
     const newUser = await User.create(req.body);
-    res.json(newUser);
+    res.json({ message: "Registered successfully", newUser });
   } else {
     throw new Error("User already exists");
   }
@@ -82,7 +82,7 @@ const updateUser = asyncHandler(async (req, res) => {
     // Fetching the updated user:
     const updatedUser = await User.findById(id, "-password");
 
-    res.json({ message: "User updated successfully", user: updatedUser });
+    res.json({ message: "User updated successfully", updatedUser });
   } catch (error) {
     throw new Error("Error updating user:", error);
   }
@@ -92,7 +92,7 @@ const updateUser = asyncHandler(async (req, res) => {
 const getAllUsers = asyncHandler(async (req, res) => {
   try {
     const allUsers = await User.find({}, "-password");
-    res.json({ users: allUsers });
+    res.json({ allUsers });
   } catch (error) {
     throw new Error("Error fetching all users:", error);
   }
@@ -107,7 +107,7 @@ const getUser = asyncHandler(async (req, res) => {
     if (!singleUser) {
       throw new Error("User not found");
     }
-    res.json({ user: singleUser });
+    res.json({ singleUser });
   } catch (error) {
     throw new Error("Error fetching user:", error);
   }
