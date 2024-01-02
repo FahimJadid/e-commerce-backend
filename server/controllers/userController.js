@@ -32,12 +32,12 @@ const loginUser = asyncHandler(async (req, res) => {
 
   if (isPasswordMatch) {
     // res.json({
-    //   _id: findUser._id,
-    //   firstName: findUser.firstName,
-    //   lastName: findUser.lastName,
-    //   email: findUser.email,
-    //   mobile: findUser.mobile,
-    //   token: findUser.generateToken(findUser._id),
+    //   _id: findUser?._id,
+    //   firstName: findUser?.firstName,
+    //   lastName: findUser?.lastName,
+    //   email: findUser?.email,
+    //   mobile: findUser?.mobile,
+    //   token: generateToken(findUser?._id),
 
     //   message: "User logged in successfully",
     // });
@@ -56,6 +56,35 @@ const loginUser = asyncHandler(async (req, res) => {
     });
   } else {
     throw new Error("Invalid Credentials");
+  }
+});
+
+// Update a User
+
+const updateUser = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { firstName, lastName, email, mobile } = req?.body;
+
+    // Checking if user exists before updating:
+    const findUser = await User.findById(id, "-password");
+    if (!findUser) {
+      throw new Error("User not found");
+    }
+
+    // if user exists, update user:
+    await User.findByIdAndUpdate(
+      id,
+      { firstName, lastName, email, mobile },
+      { new: true }
+    );
+
+    // Fetching the updated user:
+    const updatedUser = await User.findById(id, "-password");
+
+    res.json({ message: "User updated successfully", user: updatedUser });
+  } catch (error) {
+    throw new Error("Error updating user:", error);
   }
 });
 
@@ -106,4 +135,11 @@ const deleteUser = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { createUser, loginUser, getAllUsers, getUser, deleteUser };
+module.exports = {
+  createUser,
+  loginUser,
+  updateUser,
+  getAllUsers,
+  getUser,
+  deleteUser,
+};
