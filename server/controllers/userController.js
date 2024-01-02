@@ -111,7 +111,7 @@ const deleteUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
     // Checking if user exists:
-    const findUser = await User.findById(id, "-password");
+    const findUser = await User.findById(id);
     if (!findUser) {
       throw new Error("User not found");
     }
@@ -126,6 +126,55 @@ const deleteUser = asyncHandler(async (req, res) => {
   }
 });
 
+// Block a User
+const blockUser = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // update the user to set blocked to true
+    const block = await User.findByIdAndUpdate(
+      id,
+      { isBlocked: true },
+      { new: true }
+    );
+
+    if (!block) {
+      throw new Error("User not found");
+    }
+
+    res.json({
+      message: "User blocked successfully",
+    });
+  } catch (error) {
+    throw new Error("Error blocking user:", error);
+  }
+});
+
+// unlock a User
+
+const unblockUser = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // update the user to set blocked to true
+    const unblock = await User.findByIdAndUpdate(
+      id,
+      { isBlocked: false },
+      { new: true }
+    );
+
+    if (!unblock) {
+      throw new Error("User not found");
+    }
+
+    res.json({
+      message: "User unblocked successfully",
+    });
+  } catch (error) {
+    throw new Error("Error blocking user:", error);
+  }
+});
+
 module.exports = {
   createUser,
   loginUser,
@@ -133,4 +182,6 @@ module.exports = {
   getAllUsers,
   getUser,
   deleteUser,
+  blockUser,
+  unblockUser,
 };

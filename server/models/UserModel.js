@@ -40,6 +40,10 @@ const userSchema = new Schema({
     type: Array,
     default: [],
   },
+  isBlocked: {
+    type: Boolean,
+    default: false,
+  },
   address: [
     {
       type: Schema.Types.ObjectId,
