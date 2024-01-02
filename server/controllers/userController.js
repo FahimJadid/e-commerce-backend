@@ -2,6 +2,7 @@ const generateToken = require("../config/jwtToken");
 const User = require("../models/UserModel");
 const asyncHandler = require("express-async-handler");
 
+// create User / Register User
 const createUser = asyncHandler(async (req, res) => {
   const email = req.body.email;
   const findUser = await User.findOne({ email });
@@ -14,6 +15,7 @@ const createUser = asyncHandler(async (req, res) => {
   }
 });
 
+// Login User
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
@@ -57,4 +59,50 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { createUser, loginUser };
+// Get All users
+const getAllUsers = asyncHandler(async (req, res) => {
+  try {
+    const allUsers = await User.find({}, "-password");
+    res.json({ users: allUsers });
+  } catch (error) {
+    throw new Error("Error fetching all users:", error);
+  }
+});
+
+// Get a Single User
+const getUser = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+    const singleUser = await User.findById(id, "-password");
+
+    if (!singleUser) {
+      throw new Error("User not found");
+    }
+    res.json({ user: singleUser });
+  } catch (error) {
+    throw new Error("Error fetching user:", error);
+  }
+});
+
+// Delete a User
+
+const deleteUser = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Checking if user exists:
+    const findUser = await User.findById(id, "-password");
+    if (!findUser) {
+      throw new Error("User not found");
+    }
+
+    // if user exists, delete user:
+    await User.deleteOne({ _id: id });
+
+    res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    throw new Error("Error deleting user:", error);
+  }
+});
+
+module.exports = { createUser, loginUser, getAllUsers, getUser, deleteUser };
