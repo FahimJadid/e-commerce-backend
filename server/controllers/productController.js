@@ -94,9 +94,10 @@ const getAllProducts = asyncHandler(async (req, res) => {
     console.log(queryObject);
     let queryStr = JSON.stringify(queryObject); // convert object to string
     queryStr = queryStr.replace(/\b(gt|gte|lt|lte)\b/g, (match) => `$${match}`); // add $ sign before gt, gte, lt, lte
-    console.log(JSON.parse(queryStr));
 
-    const findAllProducts = await Product.find(queryObject);
+    const query = Product.find(JSON.parse(queryStr));
+
+    const findAllProducts = await query;
 
     res.json({
       message: "Products fetched successfully",
