@@ -4,6 +4,7 @@ const asyncHandler = require("express-async-handler");
 const validateMongoId = require("../utils/validateMongoId");
 const generateRefreshToken = require("../config/refreshToken");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
 // create User / Register User
 const createUser = asyncHandler(async (req, res) => {
@@ -252,6 +253,33 @@ const unblockUser = asyncHandler(async (req, res) => {
   }
 });
 
+// update password
+const updatePassword = asyncHandler(async (req, res) => {
+  const { id } = req.user;
+  const { oldPassword, newPassword } = req.body;
+  validateMongoId(id);
+
+  const user = await User.findById(id).select("+password");
+
+  const isPasswordMatch = await user.comparePassword(
+    oldPassword,
+    user.password
+  );
+
+  if (!isPasswordMatch) {
+    throw new Error("Old password does not match");
+  } else {
+    // const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = newPassword;
+    const updatedPassword = await user.save();
+
+    res.json({
+      message: "Password updated successfully",
+      user: updatedPassword,
+    });
+  }
+});
+
 module.exports = {
   createUser,
   loginUser,
@@ -263,4 +291,5 @@ module.exports = {
   unblockUser,
   handleRefreshToken,
   logout,
+  updatePassword,
 };
