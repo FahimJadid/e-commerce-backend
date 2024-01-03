@@ -4,7 +4,7 @@ const asyncHandler = require("express-async-handler");
 const validateMongoId = require("../utils/validateMongoId");
 const generateRefreshToken = require("../config/refreshToken");
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
+const sendEmail = require("../controllers/emailController");
 
 // create User / Register User
 const createUser = asyncHandler(async (req, res) => {
@@ -280,6 +280,43 @@ const updatePassword = asyncHandler(async (req, res) => {
   }
 });
 
+const forgotPasswordToken = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new Error("User not found with the provided email");
+  }
+
+  try {
+    const resetToken = await user.createPasswordResetToken();
+    await user.save();
+
+    //  const resetURL = `${req.protocol}://${req.get(
+    //    "host"
+    //  )}/reset-password/${resetToken}`;
+
+    const resetURL = `<a href="http://localhost:5000/api/v1/user/resetPassword/${resetToken}">Click Here to Reset Password</a>`;
+
+    const data = {
+      to: email,
+      subject: "Forgot Password Reset Link",
+      text: `Hey! You are receiving this email because you (or someone else) have requested the reset of the password for your account.\n\n
+             Please click on the link or paste it into your browser to complete the process because this link will expire in ten minutes.\n\n`,
+      htm: resetURL,
+    };
+
+    sendEmail(data);
+    res.json({
+      message: "Password reset email sent successfully",
+      resetToken,
+    });
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
 module.exports = {
   createUser,
   loginUser,
@@ -292,4 +329,5 @@ module.exports = {
   handleRefreshToken,
   logout,
   updatePassword,
+  forgotPasswordToken,
 };

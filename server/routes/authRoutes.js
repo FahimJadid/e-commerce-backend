@@ -17,7 +17,7 @@ const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 const router = express.Router();
 
 router.post("/register", createUser);
-router.post("/forgotPassToken", forgotPasswordToken);
+router.post("/forgotPasswordToken", forgotPasswordToken);
 router.post("/login", loginUser);
 router.put("/password", authMiddleware, updatePassword);
 
