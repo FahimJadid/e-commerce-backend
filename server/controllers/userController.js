@@ -5,6 +5,7 @@ const validateMongoId = require("../utils/validateMongoId");
 const generateRefreshToken = require("../config/refreshToken");
 const jwt = require("jsonwebtoken");
 const sendEmail = require("../controllers/emailController");
+const crypto = require("crypto");
 
 // create User / Register User
 const createUser = asyncHandler(async (req, res) => {
@@ -275,7 +276,6 @@ const updatePassword = asyncHandler(async (req, res) => {
 
     res.json({
       message: "Password updated successfully",
-      user: updatedPassword,
     });
   }
 });
@@ -317,6 +317,32 @@ const forgotPasswordToken = asyncHandler(async (req, res) => {
   }
 });
 
+const resetPassword = asyncHandler(async (req, res) => {
+  const { password } = req.body;
+  const { resetToken } = req.params;
+
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    throw new Error("Invalid or expired reset token, Please try again later.");
+  }
+
+  user.password = password;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  await user.save();
+
+  res.json({ message: "Password reset successfully" });
+});
+
 module.exports = {
   createUser,
   loginUser,
@@ -330,4 +356,5 @@ module.exports = {
   logout,
   updatePassword,
   forgotPasswordToken,
+  resetPassword,
 };
