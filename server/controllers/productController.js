@@ -87,7 +87,17 @@ const getProduct = asyncHandler(async (req, res) => {
 // getAllProducts
 const getAllProducts = asyncHandler(async (req, res) => {
   try {
-    const findAllProducts = await Product.find({});
+    const queryObject = { ...req.query };
+    const excludedFields = ["page", "sort", "limit", "fields"];
+    excludedFields.forEach((el) => delete queryObject[el]);
+
+    console.log(queryObject);
+    let queryStr = JSON.stringify(queryObject); // convert object to string
+    queryStr = queryStr.replace(/\b(gt|gte|lt|lte)\b/g, (match) => `$${match}`); // add $ sign before gt, gte, lt, lte
+    console.log(JSON.parse(queryStr));
+
+    const findAllProducts = await Product.find(queryObject);
+
     res.json({
       message: "Products fetched successfully",
       products: findAllProducts,

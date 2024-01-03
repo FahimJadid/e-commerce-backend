@@ -27,6 +27,7 @@ const productSchema = new Schema(
     quantity: {
       type: Number,
       required: true,
+      // select: false, // To not show in the response
     },
     category: {
       //   type: mongoose.Schema.Types.ObjectId,
@@ -58,6 +59,7 @@ const productSchema = new Schema(
     sold: {
       type: Number,
       default: 0,
+      // select: false, // To not show in the response
     },
   },
   { timestamps: true }
