@@ -106,6 +106,27 @@ const getAllProducts = asyncHandler(async (req, res) => {
       query = query.sort("-createdAt");
     }
 
+    // Field Limiting
+    if (req.query.fields) {
+      const fields = req.query.fields.split(",").join(" ");
+      query = query.select(fields);
+    } else {
+      query = query.select("-__v");
+    }
+
+    // Pagination
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const skip = (page - 1) * limit;
+    query = query.skip(skip).limit(limit);
+
+    if (req.query.page) {
+      const totalProducts = await Product.countDocuments();
+      if (skip >= totalProducts) {
+        throw new Error("This page does not exist");
+      }
+    }
+
     const findAllProducts = await query;
 
     res.json({
