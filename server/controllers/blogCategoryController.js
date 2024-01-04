@@ -1,0 +1,102 @@
+const BlogCategory = require("../models/BlogCategoryModel");
+const asyncHandler = require("express-async-handler");
+const validateMongoId = require("../utils/validateMongoId");
+
+const createCategory = asyncHandler(async (req, res) => {
+  try {
+    const newCategory = await BlogCategory.create(req.body);
+    res.json({
+      status: "success",
+      message: "Category created successfully",
+      category: newCategory,
+    });
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
+const updateCategory = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  validateMongoId(id);
+  try {
+    const updatedCategory = await BlogCategory.findByIdAndUpdate(id, req.body, {
+      new: true,
+    });
+
+    if (!updatedCategory) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    res.json({
+      status: "success",
+      message: "Category updated successfully",
+      category: updatedCategory,
+    });
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
+const deleteCategory = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  validateMongoId(id);
+  try {
+    const deletedCategory = await BlogCategory.findByIdAndDelete(id);
+
+    if (!deletedCategory) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+    res.json({
+      status: "success",
+      message: "Category deleted successfully",
+    });
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
+const getCategory = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  validateMongoId(id);
+  try {
+    const findCategory = await BlogCategory.findById(id);
+
+    if (!findCategory) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    res.json({
+      status: "success",
+      message: "Category fetched successfully",
+      category: findCategory,
+    });
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
+const getAllCategory = asyncHandler(async (req, res) => {
+  try {
+    const findAllCategory = await BlogCategory.find();
+
+    if (!findAllCategory) {
+      return res.status(404).json({ message: "Categories not found" });
+    }
+
+    res.json({
+      status: "success",
+      message: "Categories fetched successfully",
+      category: findAllCategory,
+    });
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
+module.exports = {
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  getCategory,
+  getAllCategory,
+};
