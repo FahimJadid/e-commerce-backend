@@ -54,6 +54,10 @@ const productSchema = new Schema(
         },
       },
     ],
+    totalRating: {
+      type: String,
+      default: 0,
+    },
 
     sold: {
       type: Number,
