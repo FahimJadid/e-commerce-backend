@@ -94,69 +94,159 @@ const deleteBlog = asyncHandler(async (req, res) => {
 });
 
 // likeBlog
+// const likeBlog = asyncHandler(async (req, res) => {
+//   const { blogId } = req.body;
+//   validateMongoId(blogId);
+
+//   const blog = await Blog.findById(blogId);
+
+//   if (!blog) {
+//     return res.status(404).json({ message: "Blog not found" });
+//   }
+
+//   const loginUserId = req?.user?._id;
+
+//   const isLiked = blog.isLiked;
+
+//   //   const alreadyDisliked = blog.dislikes.includes(loginUserId);
+//   const alreadyDisliked = blog.dislikes.find(
+//     (userId) => userId?.toString() === loginUserId?.toString()
+//   );
+
+//   if (alreadyDisliked) {
+//     const blog = await Blog.findByIdAndUpdate(
+//       blogId,
+//       {
+//         $pull: { dislikes: loginUserId },
+//         isDisliked: false,
+//       },
+//       { new: true }
+//     );
+//     res.json({
+//       status: "success",
+//       message: "Blog undisliked successfully",
+//       blog,
+//     });
+//   }
+
+//   if (isLiked) {
+//     const blog = await Blog.findByIdAndUpdate(
+//       blogId,
+//       {
+//         $pull: { likes: loginUserId },
+//         isLiked: false,
+//       },
+//       { new: true }
+//     );
+//     res.json({
+//       status: "success",
+//       message: "Blog unliked successfully",
+//       blog,
+//     });
+//   } else {
+//     const blog = await Blog.findByIdAndUpdate(
+//       blogId,
+//       {
+//         $push: { likes: loginUserId },
+//         isLiked: true,
+//       },
+//       { new: true }
+//     );
+//     res.json({
+//       status: "success",
+//       message: "Blog liked successfully",
+//       blog,
+//     });
+//   }
+// });
+
 const likeBlog = asyncHandler(async (req, res) => {
-  const { blogId } = req.body;
-  validateMongoId(blogId);
+  try {
+    const { blogId } = req.body;
+    validateMongoId(blogId);
 
-  const blog = await Blog.findById(blogId);
+    const blog = await Blog.findById(blogId);
 
-  if (!blog) {
-    return res.status(404).json({ message: "Blog not found" });
-  }
+    if (!blog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
 
-  const loginUserId = req?.user?._id;
+    const loginUserId = req?.user?._id;
 
-  const isLiked = blog.isLiked;
+    // Check if the user has already disliked the blog
+    const alreadyDisliked = blog.dislikes.includes(loginUserId);
 
-  //   const alreadyDisliked = blog.dislikes.includes(loginUserId);
-  const alreadyDisliked = blog.dislikes.find(
-    (userId) => userId?.toString() === loginUserId?.toString()
-  );
+    if (alreadyDisliked) {
+      await Blog.findByIdAndUpdate(
+        blogId,
+        {
+          $pull: { dislikes: loginUserId },
+          isDisliked: false,
+        },
+        { new: true }
+      );
+      res.json({
+        status: "success",
+        message: "Blog undisliked successfully",
+      });
+    }
 
-  if (alreadyDisliked) {
-    const blog = await Blog.findByIdAndUpdate(
-      blogId,
-      {
-        $pull: { dislikes: loginUserId },
-        isDisliked: false,
-      },
-      { new: true }
-    );
+    // Check if the user has already liked the blog
+    const alreadyLiked = blog.likes.includes(loginUserId);
+
+    // if (alreadyLiked) {
+    //   const blog = await Blog.findByIdAndUpdate(
+    //     blogId,
+    //     {
+    //       $pull: { likes: loginUserId },
+    //       isLiked: false,
+    //     },
+    //     { new: true }
+    //   );
+    //   res.json({
+    //     status: "success",
+    //     message: "Blog unliked successfully",
+    //     blog,
+    //   });
+    // } else {
+    //   const blog = await Blog.findByIdAndUpdate(
+    //     blogId,
+    //     {
+    //       $push: { likes: loginUserId },
+    //       isLiked: true,
+    //     },
+    //     { new: true }
+    //   );
+    //   res.json({
+    //     status: "success",
+    //     message: "Blog liked successfully",
+    //     blog,
+    //   });
+    // }
+
+    const updateQuery = alreadyLiked
+      ? {
+          $pull: { likes: loginUserId },
+          isLiked: false,
+        }
+      : {
+          $push: { likes: loginUserId },
+          isLiked: true,
+        };
+
+    const updatedBlog = await Blog.findByIdAndUpdate(blogId, updateQuery, {
+      new: true,
+    });
+
+    const actionMessage = alreadyLiked ? "unliked" : "liked";
+
     res.json({
       status: "success",
-      message: "Blog undisliked successfully",
-      blog,
+      message: `Blog ${actionMessage} successfully`,
+      blog: updatedBlog,
     });
-  }
-
-  if (isLiked) {
-    const blog = await Blog.findByIdAndUpdate(
-      blogId,
-      {
-        $pull: { likes: loginUserId },
-        isLiked: false,
-      },
-      { new: true }
-    );
-    res.json({
-      status: "success",
-      message: "Blog unliked successfully",
-      blog,
-    });
-  } else {
-    const blog = await Blog.findByIdAndUpdate(
-      blogId,
-      {
-        $push: { likes: loginUserId },
-        isLiked: true,
-      },
-      { new: true }
-    );
-    res.json({
-      status: "success",
-      message: "Blog liked successfully",
-      blog,
-    });
+  } catch (error) {
+    throw new Error(error);
   }
 });
 
