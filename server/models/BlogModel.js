@@ -16,7 +16,7 @@ const blogSchema = new Schema(
       type: String,
       required: true,
     },
-    numViews: {
+    views: {
       type: Number,
       default: 0,
     },
