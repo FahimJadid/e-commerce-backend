@@ -218,6 +218,37 @@ const rating = asyncHandler(async (req, res) => {
       );
       res.json(rateProduct);
     }
+
+    const getAllRatings = await Product.findById(productId);
+
+    if (!getAllRatings) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    let totalRating = getAllRatings.ratings.length;
+
+    if (totalRating === 0) {
+      // No need to calculate the average if there are no ratings
+      return res.json({ totalRating: 0 });
+    }
+
+    let ratingSum = getAllRatings.ratings
+      .map((item) => item.star)
+      .reduce((prev, curr) => {
+        return prev + curr;
+      }, 0);
+
+    let actualRating = Math.round(ratingSum / totalRating);
+
+    let finalProduct = await Product.findByIdAndUpdate(
+      productId,
+      {
+        $set: { totalRating: actualRating },
+      },
+      { new: true }
+    );
+
+    res.json(finalProduct);
   } catch (error) {
     throw new Error(error);
   }
