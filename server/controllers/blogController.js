@@ -298,7 +298,7 @@ const dislikeBlog = asyncHandler(async (req, res) => {
       new: true,
     });
 
-    const actionMessage = alreadyLiked ? "undisliked" : "disliked";
+    const actionMessage = alreadyDisliked ? "undisliked" : "disliked";
 
     res.json({
       status: "success",
