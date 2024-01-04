@@ -6,6 +6,7 @@ const connectToDatabase = require("./config/database");
 const PORT = process.env.PORT || 4040;
 const authRouter = require("./routes/authRoutes");
 const productRouter = require("./routes/productRoutes");
+const blogRouter = require("./routes/blogRoutes");
 const { notFound, errorHandler } = require("./middlewares/errorHandler");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
@@ -16,6 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use("/api/v1/user", authRouter);
 app.use("/api/v1/product", productRouter);
+app.use("/api/v1/blog", blogRouter);
 
 app.use(notFound);
 app.use(errorHandler);
