@@ -1,4 +1,5 @@
 const Product = require("../models/ProductModel");
+const User = require("../models/UserModel");
 const asyncHandler = require("express-async-handler");
 const slugify = require("slugify");
 
@@ -138,10 +139,59 @@ const getAllProducts = asyncHandler(async (req, res) => {
   }
 });
 
+// wishlist
+const addToWishlist = asyncHandler(async (req, res) => {
+  // Extract user ID from the authenticated user
+  const { id } = req.user;
+
+  // Extract product ID from the request body
+  const { productId } = req.body;
+
+  try {
+    // Check if the product exists
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Find the user in the database by their ID
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if the product is already in the user's wishlist
+    const isProductInWishlist = user.wishlist.find(
+      (id) => id.toString() === productId
+    );
+
+    if (isProductInWishlist) {
+      // If the product is already in the wishlist, remove it
+      let user = await User.findByIdAndUpdate(
+        id,
+        { $pull: { wishlist: productId } },
+        { new: true }
+      );
+      res.json({ message: "Product removed from wishlist", user });
+    } else {
+      // If the product is not in the wishlist, add it
+      let user = await User.findByIdAndUpdate(
+        id,
+        { $push: { wishlist: productId } },
+        { new: true }
+      );
+      res.json({ message: "Product added to  wishlist", user });
+    }
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
 module.exports = {
   createProduct,
   updateProduct,
   deleteProduct,
   getProduct,
   getAllProducts,
+  addToWishlist,
 };
