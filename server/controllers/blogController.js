@@ -44,8 +44,19 @@ const getBlog = asyncHandler(async (req, res) => {
   const { id } = req.params;
   validateMongoId(id);
   try {
-    const findBlog = await Blog.findById(id);
-    await Blog.findByIdAndUpdate(id, { $inc: { views: 1 } }, { new: true });
+    const findBlog = await Blog.findById(id)
+      .populate("likes")
+      .populate("dislikes");
+
+    if (!findBlog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+
+    const updatedViews = await Blog.findByIdAndUpdate(
+      id,
+      { $inc: { views: 1 } },
+      { new: true }
+    );
 
     res.json({
       status: "success",
