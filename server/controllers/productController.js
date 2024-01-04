@@ -187,6 +187,73 @@ const addToWishlist = asyncHandler(async (req, res) => {
   }
 });
 
+// const rating = asyncHandler(async (req, res) => {
+//   const { id } = req.user;
+//   const { productId, star } = req.body;
+
+//   try {
+//     const product = await Product.findById(productId);
+//     if (!product) {
+//       return res.status(404).json({ message: "Product not found" });
+//     }
+
+//     let isRatingAdded = product.ratings.find(
+//       (userId) => userId.postedBy.toString() === id.toString()
+//     );
+
+//     if (isRatingAdded) {
+//       const updateRating = await Product.updateOne(
+//         { ratings: { $elemMatch: isRatingAdded } },
+//         { $set: { "ratings.$.star": star } },
+//         { new: true }
+//       );
+//       res.json(updateRating);
+//     } else {
+//       const rateProduct = await Product.findByIdAndUpdate(
+//         productId,
+//         {
+//           $push: { ratings: { star, postedBy: id } },
+//         },
+//         { new: true }
+//       );
+//       res.json(rateProduct);
+//     }
+
+//     const getAllRatings = await Product.findById(productId);
+
+//     if (!getAllRatings) {
+//       return res.status(404).json({ message: "Product not found" });
+//     }
+
+//     let totalRating = getAllRatings.ratings.length;
+
+//     if (totalRating === 0) {
+//       // No need to calculate the average if there are no ratings
+//       return res.json({ totalRating: 0 });
+//     }
+
+//     let ratingSum = getAllRatings.ratings
+//       .map((item) => item.star)
+//       .reduce((prev, curr) => {
+//         return prev + curr;
+//       }, 0);
+
+//     let actualRating = Math.round(ratingSum / totalRating);
+
+//     let finalProduct = await Product.findByIdAndUpdate(
+//       productId,
+//       {
+//         $set: { totalRating: actualRating },
+//       },
+//       { new: true }
+//     );
+
+//     res.json(finalProduct);
+//   } catch (error) {
+//     throw new Error(error);
+//   }
+// });
+
 const rating = asyncHandler(async (req, res) => {
   const { id } = req.user;
   const { productId, star } = req.body;
@@ -197,62 +264,42 @@ const rating = asyncHandler(async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    let isRatingAdded = product.ratings.find(
-      (userId) => userId.postedBy.toString() === id.toString()
+    // Check if the user has already rated the product
+    const existingRating = product.ratings.find(
+      (rating) => rating.postedBy.toString() === id.toString()
     );
 
-    if (isRatingAdded) {
-      const updateRating = await Product.updateOne(
-        { ratings: { $elemMatch: isRatingAdded } },
-        { $set: { "ratings.$.star": star } },
-        { new: true }
-      );
-      res.json(updateRating);
+    if (existingRating) {
+      // If the user has already rated, update the existing rating
+      existingRating.star = star;
+      await product.save();
     } else {
-      const rateProduct = await Product.findByIdAndUpdate(
-        productId,
-        {
-          $push: { ratings: { star, postedBy: id } },
-        },
-        { new: true }
-      );
-      res.json(rateProduct);
+      // If the user hasn't rated, add a new rating
+      product.ratings.push({ star, postedBy: id });
+      await product.save();
     }
 
-    const getAllRatings = await Product.findById(productId);
+    // Calculate and update the total rating
+    const totalRating = calculateTotalRating(product.ratings);
+    product.totalRating = totalRating;
+    await product.save();
 
-    if (!getAllRatings) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    let totalRating = getAllRatings.ratings.length;
-
-    if (totalRating === 0) {
-      // No need to calculate the average if there are no ratings
-      return res.json({ totalRating: 0 });
-    }
-
-    let ratingSum = getAllRatings.ratings
-      .map((item) => item.star)
-      .reduce((prev, curr) => {
-        return prev + curr;
-      }, 0);
-
-    let actualRating = Math.round(ratingSum / totalRating);
-
-    let finalProduct = await Product.findByIdAndUpdate(
-      productId,
-      {
-        $set: { totalRating: actualRating },
-      },
-      { new: true }
-    );
-
-    res.json(finalProduct);
+    res.json(product);
   } catch (error) {
-    throw new Error(error);
+    console.error("Error in rating:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
+
+// Helper function to calculate the total rating based on the ratings array
+const calculateTotalRating = (ratings) => {
+  if (ratings.length === 0) {
+    return 0;
+  }
+
+  const ratingSum = ratings.reduce((prev, curr) => prev + curr.star, 0);
+  return Math.round(ratingSum / ratings.length);
+};
 
 module.exports = {
   createProduct,
