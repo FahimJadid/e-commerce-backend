@@ -177,7 +177,7 @@ const likeBlog = asyncHandler(async (req, res) => {
     const alreadyDisliked = blog.dislikes.includes(loginUserId);
 
     if (alreadyDisliked) {
-      await Blog.findByIdAndUpdate(
+      const blog = await Blog.findByIdAndUpdate(
         blogId,
         {
           $pull: { dislikes: loginUserId },
@@ -188,6 +188,7 @@ const likeBlog = asyncHandler(async (req, res) => {
       res.json({
         status: "success",
         message: "Blog undisliked successfully",
+        blog,
       });
     }
 
@@ -250,6 +251,65 @@ const likeBlog = asyncHandler(async (req, res) => {
   }
 });
 
+const dislikeBlog = asyncHandler(async (req, res) => {
+  try {
+    const { blogId } = req.body;
+    validateMongoId(blogId);
+
+    const blog = await Blog.findById(blogId);
+
+    if (!blog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+
+    const loginUserId = req?.user?._id;
+
+    const alreadyLiked = blog.likes.includes(loginUserId);
+
+    if (alreadyLiked) {
+      const blog = await Blog.findByIdAndUpdate(
+        blogId,
+        {
+          $pull: { likes: loginUserId },
+          isLiked: false,
+        },
+        { new: true }
+      );
+      res.json({
+        status: "success",
+        message: "Blog unliked successfully",
+        blog,
+      });
+    }
+
+    const alreadyDisliked = blog.dislikes.includes(loginUserId);
+
+    const updateQuery = alreadyDisliked
+      ? {
+          $pull: { dislikes: loginUserId },
+          isDisliked: false,
+        }
+      : {
+          $push: { dislikes: loginUserId },
+          isDisliked: true,
+        };
+
+    const updatedBlog = await Blog.findByIdAndUpdate(blogId, updateQuery, {
+      new: true,
+    });
+
+    const actionMessage = alreadyLiked ? "undisliked" : "disliked";
+
+    res.json({
+      status: "success",
+      message: `Blog ${actionMessage} successfully`,
+      blog: updatedBlog,
+    });
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
 module.exports = {
   createBlog,
   updateBlog,
@@ -257,4 +317,5 @@ module.exports = {
   getAllBlogs,
   deleteBlog,
   likeBlog,
+  dislikeBlog,
 };
