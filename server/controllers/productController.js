@@ -272,34 +272,30 @@ const rating = asyncHandler(async (req, res) => {
     if (existingRating) {
       // If the user has already rated, update the existing rating
       existingRating.star = star;
-      await product.save();
     } else {
       // If the user hasn't rated, add a new rating
       product.ratings.push({ star, postedBy: id });
-      await product.save();
     }
 
-    // Calculate and update the total rating
-    const totalRating = calculateTotalRating(product.ratings);
-    product.totalRating = totalRating;
-    await product.save();
+    // Calculate and update the total rating directly
+    const totalRating =
+      product.ratings.length === 0
+        ? 0
+        : Math.round(
+            product.ratings.reduce((prev, curr) => prev + curr.star, 0) /
+              product.ratings.length
+          );
 
-    res.json(product);
+    product.totalRating = totalRating;
+
+    // Save the updated product to the database
+    const updatedProduct = await product.save();
+
+    res.json(updatedProduct);
   } catch (error) {
-    console.error("Error in rating:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    throw new Error(error);
   }
 });
-
-// Helper function to calculate the total rating based on the ratings array
-const calculateTotalRating = (ratings) => {
-  if (ratings.length === 0) {
-    return 0;
-  }
-
-  const ratingSum = ratings.reduce((prev, curr) => prev + curr.star, 0);
-  return Math.round(ratingSum / ratings.length);
-};
 
 module.exports = {
   createProduct,
