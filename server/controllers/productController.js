@@ -256,7 +256,11 @@ const addToWishlist = asyncHandler(async (req, res) => {
 
 const rating = asyncHandler(async (req, res) => {
   const { id } = req.user;
-  const { productId, star } = req.body;
+  const { productId, star, comment } = req.body;
+
+  if (star < 1 || star > 5) {
+    return res.status(400).json({ message: "Rating must be between 1 and 5" });
+  }
 
   try {
     const product = await Product.findById(productId);
@@ -272,9 +276,10 @@ const rating = asyncHandler(async (req, res) => {
     if (existingRating) {
       // If the user has already rated, update the existing rating
       existingRating.star = star;
+      existingRating.comment = comment;
     } else {
       // If the user hasn't rated, add a new rating
-      product.ratings.push({ star, postedBy: id });
+      product.ratings.push({ star, comment, postedBy: id });
     }
 
     // Calculate and update the total rating directly
