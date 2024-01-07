@@ -195,6 +195,25 @@ const updateUser = asyncHandler(async (req, res) => {
   }
 });
 
+// save user Address
+const saveAddress = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.user;
+    validateMongoId(id);
+
+    // update user:
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { address: req?.body?.address },
+      { new: true }
+    ).select("-password");
+
+    res.json({ message: "User updated successfully", user: updatedUser });
+  } catch (error) {
+    throw new Error("Error updating user:", error);
+  }
+});
+
 // Get All users
 const getAllUsers = asyncHandler(async (req, res) => {
   try {
@@ -391,7 +410,7 @@ const getWishlist = asyncHandler(async (req, res) => {
     const { id } = req.user;
     validateMongoId(id);
 
-    const findUser = await User.findById(id, "-password");
+    const findUser = await User.findById(id, "-password").populate("wishlist");
 
     if (!findUser) {
       throw new Error("User not found");
@@ -407,6 +426,7 @@ module.exports = {
   loginUser,
   loginAdmin,
   updateUser,
+  saveAddress,
   getAllUsers,
   getUser,
   deleteUser,

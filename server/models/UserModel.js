@@ -46,12 +46,10 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    address: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Address",
-      },
-    ],
+    address: {
+      type: String,
+    },
+
     wishlist: [
       {
         type: Schema.Types.ObjectId,
