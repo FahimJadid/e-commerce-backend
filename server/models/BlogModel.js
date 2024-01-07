@@ -43,6 +43,7 @@ const blogSchema = new Schema(
     ],
 
     Images: [],
+
     author: {
       type: String,
       default: "Admin",
