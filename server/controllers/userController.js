@@ -385,6 +385,23 @@ const resetPassword = asyncHandler(async (req, res) => {
   res.json({ message: "Password reset successfully" });
 });
 
+// getWisHlist
+const getWishlist = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.user;
+    validateMongoId(id);
+
+    const findUser = await User.findById(id, "-password");
+
+    if (!findUser) {
+      throw new Error("User not found");
+    }
+    res.json({ user: findUser });
+  } catch (error) {
+    throw new Error("Error fetching wishlist:", error);
+  }
+});
+
 module.exports = {
   createUser,
   loginUser,
@@ -400,4 +417,5 @@ module.exports = {
   updatePassword,
   forgotPasswordToken,
   resetPassword,
+  getWishlist,
 };
