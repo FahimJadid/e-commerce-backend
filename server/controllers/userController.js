@@ -431,7 +431,7 @@ const userCart = asyncHandler(async (req, res) => {
   try {
     let products = [];
     const user = await User.findById(id);
-    const existingCart = await Cart.findOne({ orderedBy: user._id });
+    const existingCart = await Cart.findOne({ orderBy: user._id });
     if (existingCart) {
       existingCart.remove();
     }
@@ -455,10 +455,74 @@ const userCart = asyncHandler(async (req, res) => {
     let newCart = await new Cart({
       products,
       cartTotal,
-      orderedBy: user._id,
+      orderBy: user._id,
     }).save();
 
     res.json(newCart);
+  } catch (error) {
+    throw new Error("Error fetching user cart:", error);
+  }
+});
+
+// user cart
+// const userCart = asyncHandler(async (req, res) => {
+//   const { cart } = req.body;
+//   const { id } = req.user;
+//   validateMongoId(id);
+
+//   try {
+//     let products = [];
+//     const user = await User.findById(id);
+//     let existingCart = await Cart.findOne({ orderBy: user._id });
+
+//     if (existingCart) {
+//       // Update the existing cart
+//       existingCart.products = [];
+//       existingCart.cartTotal = 0;
+//     } else {
+//       // Create a new cart if none exists
+//       existingCart = new Cart({
+//         orderBy: user._id,
+//       });
+//     }
+
+//     for (let i = 0; i < cart.length; i++) {
+//       let object = {};
+//       object.product = cart[i]._id;
+//       object.quantity = cart[i].quantity;
+//       object.color = cart[i].color;
+
+//       let getPrice = await Product.findById(cart[i]._id).select("price").exec();
+//       object.price = getPrice.price;
+
+//       existingCart.products.push(object);
+//       existingCart.cartTotal += object.price * object.quantity;
+//     }
+
+//     console.log("cartTotal", existingCart.cartTotal);
+
+//     // Save the updated/existing cart
+//     await existingCart.save();
+
+//     res.json(existingCart);
+//   } catch (error) {
+//     throw new Error("Error fetching user cart:", error);
+//   }
+// });
+
+// get user cart
+
+const getUserCart = asyncHandler(async (req, res) => {
+  const { id } = req.user;
+  validateMongoId(id);
+  try {
+    const user = await User.findById(id);
+
+    const cart = await Cart.findOne({ orderBy: user._id }).populate(
+      "products.product"
+    );
+
+    res.json(cart);
   } catch (error) {
     throw new Error("Error fetching user cart:", error);
   }
@@ -482,4 +546,5 @@ module.exports = {
   resetPassword,
   getWishlist,
   userCart,
+  getUserCart,
 };

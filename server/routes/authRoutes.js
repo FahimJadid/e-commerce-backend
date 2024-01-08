@@ -17,6 +17,7 @@ const {
   getWishlist,
   saveAddress,
   userCart,
+  getUserCart,
 } = require("../controllers/userController");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 const router = express.Router();
@@ -36,6 +37,8 @@ router.get("/allUsers", getAllUsers);
 router.get("/refresh", handleRefreshToken);
 router.get("/logout", logout);
 router.get("/wishlist", authMiddleware, getWishlist);
+router.get("/cart", authMiddleware, getUserCart);
+
 router.get("/:id", authMiddleware, isAdmin, getUser);
 
 router.delete("/:id", deleteUser);
