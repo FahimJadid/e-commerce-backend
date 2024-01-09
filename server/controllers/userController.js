@@ -656,6 +656,39 @@ const getOrders = asyncHandler(async (req, res) => {
   }
 });
 
+// get all orders
+const getAllOrders = asyncHandler(async (req, res) => {
+  try {
+    const allOrders = await Order.find({})
+      .sort("-createdAt")
+      .populate("products.product")
+      .populate("orderedBy")
+      .exec();
+
+    res.json(allOrders);
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
+// get orders by user id
+const getOrderByUserId = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  validateMongoId(id);
+
+  try {
+    const orders = await Order.findOne({ orderedBy: id })
+      .sort("-createdAt")
+      .populate("products.product")
+      .populate("orderedBy")
+      .exec();
+
+    res.json(orders);
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
 // update order status
 const updateOrderStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
@@ -705,5 +738,7 @@ module.exports = {
   applyCoupon,
   createOrder,
   getOrders,
+  getAllOrders,
+  getOrderByUserId,
   updateOrderStatus,
 };
