@@ -423,18 +423,22 @@ const getWishlist = asyncHandler(async (req, res) => {
   }
 });
 
-// user cart
+// userCart
 const userCart = asyncHandler(async (req, res) => {
-  const { cart } = req.body;
-  const { id } = req.user;
-  validateMongoId(id);
   try {
+    const { cart } = req.body;
+    const { _id } = req.user;
+    validateMongoId(_id);
+
     let products = [];
-    const user = await User.findById(id);
-    const existingCart = await Cart.findOne({ orderBy: user._id });
+    const user = await User.findById(_id);
+
+    const existingCart = await Cart.findOne({ orderedBy: user._id });
+
     if (existingCart) {
-      existingCart.remove();
+      existingCart.deleteOne();
     }
+
     for (let i = 0; i < cart.length; i++) {
       let object = {};
       object.product = cart[i]._id;
@@ -444,87 +448,63 @@ const userCart = asyncHandler(async (req, res) => {
       object.price = getPrice.price;
       products.push(object);
     }
+    // console.log("products", products);
 
     let cartTotal = 0;
     for (let i = 0; i < products.length; i++) {
       cartTotal = cartTotal + products[i].price * products[i].quantity;
     }
 
-    console.log("cartTotal", cartTotal);
+    // console.log("cartTotal", cartTotal);
 
     let newCart = await new Cart({
       products,
       cartTotal,
-      orderBy: user._id,
+      orderedBy: user._id,
     }).save();
+
+    // console.log("newCart", newCart);
 
     res.json(newCart);
   } catch (error) {
+    console.log(error);
     throw new Error("Error fetching user cart:", error);
   }
 });
 
-// user cart
-// const userCart = asyncHandler(async (req, res) => {
-//   const { cart } = req.body;
-//   const { id } = req.user;
-//   validateMongoId(id);
-
-//   try {
-//     let products = [];
-//     const user = await User.findById(id);
-//     let existingCart = await Cart.findOne({ orderBy: user._id });
-
-//     if (existingCart) {
-//       // Update the existing cart
-//       existingCart.products = [];
-//       existingCart.cartTotal = 0;
-//     } else {
-//       // Create a new cart if none exists
-//       existingCart = new Cart({
-//         orderBy: user._id,
-//       });
-//     }
-
-//     for (let i = 0; i < cart.length; i++) {
-//       let object = {};
-//       object.product = cart[i]._id;
-//       object.quantity = cart[i].quantity;
-//       object.color = cart[i].color;
-
-//       let getPrice = await Product.findById(cart[i]._id).select("price").exec();
-//       object.price = getPrice.price;
-
-//       existingCart.products.push(object);
-//       existingCart.cartTotal += object.price * object.quantity;
-//     }
-
-//     console.log("cartTotal", existingCart.cartTotal);
-
-//     // Save the updated/existing cart
-//     await existingCart.save();
-
-//     res.json(existingCart);
-//   } catch (error) {
-//     throw new Error("Error fetching user cart:", error);
-//   }
-// });
-
 // get user cart
 
 const getUserCart = asyncHandler(async (req, res) => {
-  const { id } = req.user;
-  validateMongoId(id);
-  try {
-    const user = await User.findById(id);
+  const { _id } = req.user;
+  validateMongoId(_id);
 
-    const cart = await Cart.findOne({ orderBy: user._id }).populate(
+  try {
+    const cart = await Cart.findOne({ orderedBy: _id }).populate(
       "products.product"
     );
 
     res.json(cart);
   } catch (error) {
     throw new Error("Error fetching user cart:", error);
+  }
+});
+
+// empty cart
+const emptyCart = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  validateMongoId(_id);
+
+  try {
+    const user = await User.findOne({ _id });
+    const cart = await Cart.findOneAndDelete({ orderedBy: user._id });
+
+    if (cart) {
+      res.json({ message: "User cart emptied successfully.", cart });
+    } else {
+      res.json({ message: "User cart is already empty." });
+    }
+  } catch (error) {
+    throw new Error("Error emptying user cart:", error);
   }
 });
 
@@ -547,4 +527,5 @@ module.exports = {
   getWishlist,
   userCart,
   getUserCart,
+  emptyCart,
 };

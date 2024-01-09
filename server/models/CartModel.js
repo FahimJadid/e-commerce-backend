@@ -7,7 +7,7 @@ const cartSchema = new Schema(
     products: [
       {
         product: {
-          type: Schema.Types.ObjectId,
+          type: mongoose.Schema.Types.ObjectId,
           ref: "Product",
         },
         quantity: {
@@ -23,14 +23,12 @@ const cartSchema = new Schema(
     ],
     cartTotal: {
       type: Number,
-      default: 0,
     },
     totalAfterDiscount: {
       type: Number,
-      default: 0,
     },
-    orderBy: {
-      type: Schema.Types.ObjectId,
+    orderedBy: {
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
   },
