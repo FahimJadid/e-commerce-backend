@@ -36,13 +36,9 @@ const productSchema = new Schema(
       type: String,
       required: true,
     },
-    images: {
-      type: [],
-    },
-    color: {
-      type: String,
-      required: true,
-    },
+    images: [],
+    color: [],
+    tags: [],
     ratings: [
       {
         star: {
