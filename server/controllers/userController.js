@@ -2,6 +2,7 @@ const generateToken = require("../config/jwtToken");
 const User = require("../models/UserModel");
 const Product = require("../models/ProductModel");
 const Cart = require("../models/CartModel");
+const Coupon = require("../models/CouponModel");
 const asyncHandler = require("express-async-handler");
 const validateMongoId = require("../utils/validateMongoId");
 const generateRefreshToken = require("../config/refreshToken");
@@ -11,169 +12,189 @@ const crypto = require("crypto");
 
 // create User / Register User
 const createUser = asyncHandler(async (req, res) => {
-  const email = req.body.email;
-  const findUser = await User.findOne({ email });
+  try {
+    const email = req.body.email;
+    const findUser = await User.findOne({ email });
 
-  if (!findUser) {
-    const newUser = await User.create(req.body);
-    res.json({ message: "Registered successfully", user: newUser });
-  } else {
-    throw new Error("User already exists");
+    if (!findUser) {
+      const newUser = await User.create(req.body);
+      res.json({ message: "Registered successfully", user: newUser });
+    } else {
+      throw new Error("User already exists");
+    }
+  } catch (error) {
+    throw new Error(error);
   }
 });
 
 // Login User
 const loginUser = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  // find the user by email:
-  const findUser = await User.findOne({ email });
+    // find the user by email:
+    const findUser = await User.findOne({ email });
 
-  // Check if user exists:
-  if (!findUser) {
-    throw new Error("User does not exist");
-  }
+    // Check if user exists:
+    if (!findUser) {
+      throw new Error("User does not exist");
+    }
 
-  // Check if password matches:
-  const isPasswordMatch = await findUser.comparePassword(password);
+    // Check if password matches:
+    const isPasswordMatch = await findUser.comparePassword(password);
 
-  if (isPasswordMatch) {
-    // res.json({
-    //   _id: findUser?._id,
-    //   firstName: findUser?.firstName,
-    //   lastName: findUser?.lastName,
-    //   email: findUser?.email,
-    //   mobile: findUser?.mobile,
-    //   token: generateToken(findUser?._id),
+    if (isPasswordMatch) {
+      // res.json({
+      //   _id: findUser?._id,
+      //   firstName: findUser?.firstName,
+      //   lastName: findUser?.lastName,
+      //   email: findUser?.email,
+      //   mobile: findUser?.mobile,
+      //   token: generateToken(findUser?._id),
 
-    //   message: "User logged in successfully",
-    // });
-    const refreshToken = generateRefreshToken(findUser?._id);
-    const { _id, firstName, lastName, email, mobile } = findUser;
-    const token = generateToken(findUser._id);
+      //   message: "User logged in successfully",
+      // });
+      const refreshToken = generateRefreshToken(findUser?._id);
+      const { _id, firstName, lastName, email, mobile } = findUser;
+      const token = generateToken(findUser._id);
 
-    const updateUser = await User.findByIdAndUpdate(
-      findUser._id,
-      { refreshToken: refreshToken },
-      { new: true }
-    );
+      const updateUser = await User.findByIdAndUpdate(
+        findUser._id,
+        { refreshToken: refreshToken },
+        { new: true }
+      );
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      maxAge: 72 * 60 * 60 * 1000,
-    });
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        maxAge: 72 * 60 * 60 * 1000,
+      });
 
-    res.json({
-      _id,
-      firstName,
-      lastName,
-      email,
-      mobile,
-      token,
-      message: "User logged in successfully",
-    });
-  } else {
-    throw new Error("Invalid Credentials");
+      res.json({
+        _id,
+        firstName,
+        lastName,
+        email,
+        mobile,
+        token,
+        message: "User logged in successfully",
+      });
+    } else {
+      throw new Error("Invalid Credentials");
+    }
+  } catch (error) {
+    throw new Error(error);
   }
 });
 
 // Login Admin
 const loginAdmin = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const findAdmin = await User.findOne({ email });
+    const findAdmin = await User.findOne({ email });
 
-  if (findAdmin.role !== "admin") {
-    throw new Error("Unauthorized!");
-  }
+    if (findAdmin.role !== "admin") {
+      throw new Error("Unauthorized!");
+    }
 
-  const isPasswordMatch = await findAdmin.comparePassword(password);
+    const isPasswordMatch = await findAdmin.comparePassword(password);
 
-  if (isPasswordMatch) {
-    const refreshToken = generateRefreshToken(findAdmin?._id);
-    const { _id, firstName, lastName, email, mobile } = findAdmin;
-    const token = generateToken(findAdmin._id);
+    if (isPasswordMatch) {
+      const refreshToken = generateRefreshToken(findAdmin?._id);
+      const { _id, firstName, lastName, email, mobile } = findAdmin;
+      const token = generateToken(findAdmin._id);
 
-    const updateAdmin = await User.findByIdAndUpdate(
-      findAdmin._id,
-      { refreshToken: refreshToken },
-      { new: true }
-    );
+      const updateAdmin = await User.findByIdAndUpdate(
+        findAdmin._id,
+        { refreshToken: refreshToken },
+        { new: true }
+      );
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      maxAge: 72 * 60 * 60 * 1000,
-    });
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        maxAge: 72 * 60 * 60 * 1000,
+      });
 
-    res.json({
-      _id,
-      firstName,
-      lastName,
-      email,
-      mobile,
-      token,
-      message: "Admin logged in successfully",
-    });
-  } else {
-    throw new Error("Invalid Credentials");
+      res.json({
+        _id,
+        firstName,
+        lastName,
+        email,
+        mobile,
+        token,
+        message: "Admin logged in successfully",
+      });
+    } else {
+      throw new Error("Invalid Credentials");
+    }
+  } catch (error) {
+    throw new Error(error);
   }
 });
 
 // Handling refresh Token
 const handleRefreshToken = asyncHandler(async (req, res) => {
-  const cookie = req?.cookies;
-  const refreshToken = cookie?.refreshToken;
-  // console.log(refreshToken);
-  if (!refreshToken) {
-    throw new Error("No refresh token found in Cookies");
-  }
-
-  const user = await User.findOne({ refreshToken }).select("-password");
-
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  jwt.verify(refreshToken, process.env.JWT_SECRET, (err, decoded) => {
-    // console.log(decoded);
-    // console.log(decoded.user.id);
-    if (err || user.id !== decoded.user.id) {
-      throw new Error("Invalid refresh token");
+  try {
+    const cookie = req?.cookies;
+    const refreshToken = cookie?.refreshToken;
+    // console.log(refreshToken);
+    if (!refreshToken) {
+      throw new Error("No refresh token found in Cookies");
     }
 
-    // Generate a new access token
-    const accessToken = generateToken(user?._id);
-    res.json({ accessToken });
-  });
+    const user = await User.findOne({ refreshToken }).select("-password");
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    jwt.verify(refreshToken, process.env.JWT_SECRET, (err, decoded) => {
+      // console.log(decoded);
+      // console.log(decoded.user.id);
+      if (err || user.id !== decoded.user.id) {
+        throw new Error("Invalid refresh token");
+      }
+
+      // Generate a new access token
+      const accessToken = generateToken(user?._id);
+      res.json({ accessToken });
+    });
+  } catch (error) {
+    throw new Error(error);
+  }
 });
 
 // Logout User
 const logout = asyncHandler(async (req, res) => {
-  const cookie = req.cookies;
-  const refreshToken = cookie?.refreshToken;
+  try {
+    const cookie = req.cookies;
+    const refreshToken = cookie?.refreshToken;
 
-  if (!refreshToken) {
-    throw new Error("No refresh token found in Cookies");
-  }
+    if (!refreshToken) {
+      throw new Error("No refresh token found in Cookies");
+    }
 
-  const user = await User.findOne({ refreshToken }).select("-password");
+    const user = await User.findOne({ refreshToken }).select("-password");
 
-  if (!user) {
+    if (!user) {
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: true,
+      });
+      return res.status(204).json({ message: "User not found" });
+    }
+
+    await User.findByIdAndUpdate(user._id, { $unset: { refreshToken: "" } });
+
     res.clearCookie("refreshToken", {
       httpOnly: true,
       secure: true,
     });
-    return res.status(204).json({ message: "User not found" });
+
+    res.json({ message: "Logout successful" });
+  } catch (error) {
+    throw new Error(error);
   }
-
-  await User.findByIdAndUpdate(user._id, { $unset: { refreshToken: "" } });
-
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: true,
-  });
-
-  res.json({ message: "Logout successful" });
 });
 
 // Update a User
@@ -193,7 +214,7 @@ const updateUser = asyncHandler(async (req, res) => {
 
     res.json({ message: "User updated successfully", user: updatedUser });
   } catch (error) {
-    throw new Error("Error updating user:", error);
+    throw new Error(error);
   }
 });
 
@@ -212,7 +233,7 @@ const saveAddress = asyncHandler(async (req, res) => {
 
     res.json({ message: "User updated successfully", user: updatedUser });
   } catch (error) {
-    throw new Error("Error updating user:", error);
+    throw new Error(error);
   }
 });
 
@@ -222,7 +243,7 @@ const getAllUsers = asyncHandler(async (req, res) => {
     const allUsers = await User.find({}, "-password");
     res.json({ users: allUsers });
   } catch (error) {
-    throw new Error("Error fetching all users:", error);
+    throw new Error(error);
   }
 });
 
@@ -239,7 +260,7 @@ const getUser = asyncHandler(async (req, res) => {
     }
     res.json({ user: singleUser });
   } catch (error) {
-    throw new Error("Error fetching user:", error);
+    throw new Error(error);
   }
 });
 
@@ -262,7 +283,7 @@ const deleteUser = asyncHandler(async (req, res) => {
 
     res.json({ message: "User deleted successfully" });
   } catch (error) {
-    throw new Error("Error deleting user:", error);
+    throw new Error(error);
   }
 });
 
@@ -287,7 +308,7 @@ const blockUser = asyncHandler(async (req, res) => {
       message: "User blocked successfully",
     });
   } catch (error) {
-    throw new Error("Error blocking user:", error);
+    throw new Error(error);
   }
 });
 
@@ -313,33 +334,37 @@ const unblockUser = asyncHandler(async (req, res) => {
       message: "User Unblocked successfully",
     });
   } catch (error) {
-    throw new Error("Error blocking user:", error);
+    throw new Error(error);
   }
 });
 
 // update password
 const updatePassword = asyncHandler(async (req, res) => {
-  const { id } = req.user;
-  const { oldPassword, newPassword } = req.body;
-  validateMongoId(id);
+  try {
+    const { id } = req.user;
+    const { oldPassword, newPassword } = req.body;
+    validateMongoId(id);
 
-  const user = await User.findById(id).select("+password");
+    const user = await User.findById(id).select("+password");
 
-  const isPasswordMatch = await user.comparePassword(
-    oldPassword,
-    user.password
-  );
+    const isPasswordMatch = await user.comparePassword(
+      oldPassword,
+      user.password
+    );
 
-  if (!isPasswordMatch) {
-    throw new Error("Old password does not match");
-  } else {
-    // const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = newPassword;
-    const updatedPassword = await user.save();
+    if (!isPasswordMatch) {
+      throw new Error("Old password does not match");
+    } else {
+      // const hashedPassword = await bcrypt.hash(newPassword, 10);
+      user.password = newPassword;
+      const updatedPassword = await user.save();
 
-    res.json({
-      message: "Password updated successfully",
-    });
+      res.json({
+        message: "Password updated successfully",
+      });
+    }
+  } catch (error) {
+    throw new Error(error);
   }
 });
 
@@ -381,29 +406,35 @@ const forgotPasswordToken = asyncHandler(async (req, res) => {
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
-  const { password } = req.body;
-  const { resetToken } = req.params;
+  try {
+    const { password } = req.body;
+    const { resetToken } = req.params;
 
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
 
-  const user = await User.findOne({
-    passwordResetToken: hashedToken,
-    passwordResetExpires: { $gt: Date.now() },
-  });
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: Date.now() },
+    });
 
-  if (!user) {
-    throw new Error("Invalid or expired reset token, Please try again later.");
+    if (!user) {
+      throw new Error(
+        "Invalid or expired reset token, Please try again later."
+      );
+    }
+
+    user.password = password;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+
+    res.json({ message: "Password reset successfully" });
+  } catch (error) {
+    throw new Error(error);
   }
-
-  user.password = password;
-  user.passwordResetToken = undefined;
-  user.passwordResetExpires = undefined;
-  await user.save();
-
-  res.json({ message: "Password reset successfully" });
 });
 
 // getWisHlist
@@ -419,7 +450,7 @@ const getWishlist = asyncHandler(async (req, res) => {
     }
     res.json({ user: findUser });
   } catch (error) {
-    throw new Error("Error fetching wishlist:", error);
+    throw new Error(error);
   }
 });
 
@@ -468,7 +499,7 @@ const userCart = asyncHandler(async (req, res) => {
     res.json(newCart);
   } catch (error) {
     console.log(error);
-    throw new Error("Error fetching user cart:", error);
+    throw new Error(error);
   }
 });
 
@@ -485,7 +516,7 @@ const getUserCart = asyncHandler(async (req, res) => {
 
     res.json(cart);
   } catch (error) {
-    throw new Error("Error fetching user cart:", error);
+    throw new Error(error);
   }
 });
 
@@ -504,7 +535,45 @@ const emptyCart = asyncHandler(async (req, res) => {
       res.json({ message: "User cart is already empty." });
     }
   } catch (error) {
-    throw new Error("Error emptying user cart:", error);
+    throw new Error(error);
+  }
+});
+
+// apply coupon
+const applyCoupon = asyncHandler(async (req, res) => {
+  const { coupon } = req.body;
+  const { _id } = req.user;
+  validateMongoId(_id);
+
+  try {
+    const validCoupon = await Coupon.findOne({ name: coupon });
+
+    if (!validCoupon || validCoupon === null) {
+      throw new Error("Invalid coupon");
+    }
+
+    const user = await User.findOne({ _id });
+
+    let { cartTotal } = await Cart.findOne({
+      orderedBy: user._id,
+    }).populate("products.product");
+
+    let totalAfterDiscount = (
+      cartTotal -
+      (cartTotal * validCoupon.discount) / 100
+    ).toFixed(2);
+
+    await Cart.findOneAndUpdate(
+      { orderedBy: user._id },
+      { totalAfterDiscount },
+      { new: true }
+    );
+
+    res.json({
+      totalAfterDiscount,
+    });
+  } catch (error) {
+    throw new Error(error);
   }
 });
 
@@ -528,4 +597,5 @@ module.exports = {
   userCart,
   getUserCart,
   emptyCart,
+  applyCoupon,
 };
