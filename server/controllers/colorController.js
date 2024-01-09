@@ -41,7 +41,7 @@ const deleteColor = asyncHandler(async (req, res) => {
   try {
     const deletedColor = await Color.findByIdAndDelete(id);
 
-    if (!deletedBrand) {
+    if (!deletedColor) {
       return res.status(404).json({ message: "Color not found" });
     }
     res.json({
@@ -71,7 +71,7 @@ const getColor = asyncHandler(async (req, res) => {
   }
 });
 
-const getallColor = asyncHandler(async (req, res) => {
+const getAllColor = asyncHandler(async (req, res) => {
   try {
     const findAllColor = await Color.find();
     if (!findAllColor) {
@@ -92,5 +92,5 @@ module.exports = {
   updateColor,
   deleteColor,
   getColor,
-  getallColor,
+  getAllColor,
 };
