@@ -637,6 +637,51 @@ const createOrder = asyncHandler(async (req, res) => {
   }
 });
 
+// get user orders
+
+const getOrders = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  validateMongoId(_id);
+
+  try {
+    const orders = await Order.findOne({ orderedBy: _id })
+      .select("-password")
+      .populate("products.product")
+      .populate("orderedBy")
+      .exec();
+
+    res.json(orders);
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
+// update order status
+const updateOrderStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body;
+  const { id } = req.params;
+  validateMongoId(id);
+  try {
+    const updatedOrderStatus = await Order.findByIdAndUpdate(
+      id,
+      {
+        orderStatus: status,
+        paymentIntent: {
+          status: status,
+        },
+      },
+      { new: true }
+    );
+
+    res.json({
+      message: "Order status updated successfully",
+      updatedOrderStatus,
+    });
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
 module.exports = {
   createUser,
   loginUser,
@@ -659,4 +704,6 @@ module.exports = {
   emptyCart,
   applyCoupon,
   createOrder,
+  getOrders,
+  updateOrderStatus,
 };
