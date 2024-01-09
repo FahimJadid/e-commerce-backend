@@ -339,7 +339,6 @@ const uploadImages = asyncHandler(async (req, res) => {
 // Delete Images
 const deleteImages = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  validateMongoId(id);
   try {
     const deleted = deleteImgCloudinary(id, "images");
     res.json({ message: "Images deleted successfully" });
