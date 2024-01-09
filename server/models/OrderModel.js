@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 
 const orderSchema = new Schema(
   {
-    orderBy: {
+    orderedBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -14,11 +14,9 @@ const orderSchema = new Schema(
         product: {
           type: Schema.Types.ObjectId,
           ref: "Product",
-          required: true,
         },
         quantity: {
           type: Number,
-          required: true,
         },
         color: {
           type: String,
@@ -38,12 +36,7 @@ const orderSchema = new Schema(
       ],
       default: "Pending",
     },
-    paymentMethod: {
-      type: String,
-      enum: ["Credit Card", "Bkash", "Nagad", "PayPal", "Cash on Delivery"],
-      default: "Cash on Delivery",
-      required: true,
-    },
+    paymentIntent: {},
   },
   { timestamps: true }
 );

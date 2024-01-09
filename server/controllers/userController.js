@@ -2,6 +2,10 @@ const generateToken = require("../config/jwtToken");
 const User = require("../models/UserModel");
 const Product = require("../models/ProductModel");
 const Cart = require("../models/CartModel");
+const Order = require("../models/OrderModel");
+
+const uniqid = require("uniqid");
+
 const Coupon = require("../models/CouponModel");
 const asyncHandler = require("express-async-handler");
 const validateMongoId = require("../utils/validateMongoId");
@@ -577,6 +581,62 @@ const applyCoupon = asyncHandler(async (req, res) => {
   }
 });
 
+// create order
+const createOrder = asyncHandler(async (req, res) => {
+  const { COD, couponApplied } = req.body;
+  const { _id } = req.user;
+  validateMongoId(_id);
+
+  try {
+    if (!COD) {
+      throw new Error("Please select a payment method");
+    }
+
+    const user = await User.findById(_id);
+
+    let userCart = await Cart.findOne({ orderedBy: user._id });
+
+    let finalAmount = 0;
+    if (couponApplied && userCart.totalAfterDiscount) {
+      finalAmount = userCart.totalAfterDiscount;
+    } else {
+      finalAmount = userCart.cartTotal;
+    }
+
+    let newOrder = await new Order({
+      products: userCart.products,
+      paymentIntent: {
+        id: uniqid(),
+        amount: finalAmount,
+        currency: "usd",
+        status: "Cash on Delivery",
+        created: Date.now(),
+        // payment_method_types: ["cash"],
+        method: "COD",
+      },
+      orderedBy: user._id,
+      orderStatus: "Cash on Delivery",
+    }).save();
+
+    let update = userCart.products.map((item) => {
+      return {
+        updateOne: {
+          filter: { _id: item.product._id },
+          update: {
+            $inc: { quantity: -item.quantity, sold: +item.quantity },
+          },
+        },
+      };
+    });
+
+    const updated = await Product.bulkWrite(update, {});
+
+    res.json({ message: "Order created successfully" });
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
 module.exports = {
   createUser,
   loginUser,
@@ -598,4 +658,5 @@ module.exports = {
   getUserCart,
   emptyCart,
   applyCoupon,
+  createOrder,
 };
